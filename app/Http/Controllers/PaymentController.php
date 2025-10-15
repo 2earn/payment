@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Validator;
 
 class PaymentController extends Controller
 {
@@ -13,11 +14,18 @@ class PaymentController extends Controller
     {
         Log::info('Payment request received', ['request' => $request->all()]);
 
-        $validated = $request->validate([
+        $validator = Validator::make($request->all(), [
             'order_id' => 'required|string',
         ]);
 
-        $orderId = $validated['order_id'];
+        if ($validator->fails()) {
+            return response()->json([
+                'error' => 'MISSING_ORDER_ID',
+                'message' => 'The order_id parameter is required.',
+            ], 400);
+        }
+
+        $orderId = $request->input('order_id');
 
         try {
             $baseUrl = config('services.payment2earn.base_url');
@@ -37,7 +45,7 @@ class PaymentController extends Controller
             $data = $response->json();
 
             if (isset($data['status']) && $data['status'] === 'error') {
-                // Handle specific errors from the payment gateway
+
                 $errorCode = $data['error_code'] ?? 'UNKNOWN_ERROR';
                 $errorMessage = $data['message'] ?? 'An unknown error occurred.';
 
@@ -73,7 +81,6 @@ class PaymentController extends Controller
             return $successResponse;
 
         } catch (\Exception $e) {
-            // Handle unexpected exceptions
             $errorResponse = response()->json([
                 'error' => 'INTERNAL_SERVER_ERROR',
                 'message' => 'An internal server error occurred.',
