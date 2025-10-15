@@ -1,29 +1,17 @@
 <?php
 
 return [
-
     /*
     |--------------------------------------------------------------------------
-    | API Documentation Visibility
+    | Payment-2-Earn Settings
     |--------------------------------------------------------------------------
     |
-    | This option controls whether the API documentation section is displayed
-    | on the welcome page. Set to false to hide the API documentation.
+    | This file is for storing the settings for the Payment-2-Earn system.
     |
     */
 
-    'show_api_documentation' => env('SHOW_API_DOCUMENTATION', true),
+    'show_api_documentation' => env('PAYMENT2EARN_SHOW_API_DOCS', false),
 
-    /*
-    |--------------------------------------------------------------------------
-    | API Endpoint
-    |--------------------------------------------------------------------------
-    |
-    | The API endpoint for payment processing.
-    |
-    */
-
-    'api_endpoint' => env('PAYMENT_API_ENDPOINT', '/api/payment/process'),
-
+    'api_endpoint' => env('PAYMENT2EARN_API_ENDPOINT', '/api/payment/process'),
 ];
 
