@@ -1,7 +1,6 @@
 <?php
 
 return [
-
     /*
     |--------------------------------------------------------------------------
     | Third Party Services
@@ -35,4 +34,7 @@ return [
         ],
     ],
 
+    'payment2earn' => [
+        'base_url' => env('CORE_2EARN_BASE_URL', 'http://2earn.test'),
+    ],
 ];
