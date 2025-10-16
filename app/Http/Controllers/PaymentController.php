@@ -10,9 +10,12 @@ use Illuminate\Support\Facades\Validator;
 
 class PaymentController extends Controller
 {
+    private const PROCESS_ORDER_ENDPOINT = '/api/order/process';
+    private const LOG_PREFIX = 'PaymentController: ';
+
     public function handlePayment(Request $request): JsonResponse
     {
-        Log::info('Payment request received', ['request' => $request->all()]);
+        Log::info(self::LOG_PREFIX . 'Payment request received', ['request' => $request->all()]);
 
         $validator = Validator::make($request->all(), [
             'order_id' => 'required|string',
@@ -29,16 +32,28 @@ class PaymentController extends Controller
 
         try {
             $baseUrl = config('services.payment2earn.base_url');
-            $response = Http::post($baseUrl . '/process-payment', [
+            $response = Http::post($baseUrl . self::PROCESS_ORDER_ENDPOINT, [
                 'order_id' => $orderId,
             ]);
+
+            if ($response->status() === 422) {
+                $errorResponse = response()->json([
+                    'error' => 'UNPROCESSABLE_CONTENT',
+                    'message' => 'The request was well-formed but was unable to be followed due to semantic errors.',
+                    'details' => $response->json(),
+                ], 422);
+                Log::error(self::LOG_PREFIX . 'Unprocessable Content', ['response' => $errorResponse]);
+                return $errorResponse;
+            }
 
             if ($response->failed()) {
                 $errorResponse = response()->json([
                     'error' => 'API_COMMUNICATION_FAILURE',
                     'message' => 'Failed to communicate with the payment gateway.',
                 ], 502);
-                Log::error('API communication failure', ['response' => $errorResponse]);
+
+
+                Log::error(self::LOG_PREFIX . 'API communication failure', ['response' => $errorResponse]);
                 return $errorResponse;
             }
 
@@ -59,7 +74,7 @@ class PaymentController extends Controller
                     'error' => $errorCode,
                     'message' => $errorMessage,
                 ], $statusCode);
-                Log::error('Payment gateway error', ['response' => $errorResponse]);
+                Log::error(self::LOG_PREFIX . 'Payment gateway error', ['response' => $errorResponse]);
                 return $errorResponse;
             }
 
@@ -77,7 +92,7 @@ class PaymentController extends Controller
                 "timestamp" => now()->toIso8601String(),
             ]);
 
-            Log::info('Payment request successful', ['response' => $successResponse]);
+            Log::info(self::LOG_PREFIX . 'Payment request successful', ['response' => $successResponse]);
             return $successResponse;
 
         } catch (\Exception $e) {
@@ -85,7 +100,7 @@ class PaymentController extends Controller
                 'error' => 'INTERNAL_SERVER_ERROR',
                 'message' => 'An internal server error occurred.',
             ], 500);
-            Log::critical('Internal server error', ['exception' => $e->getMessage(), 'response' => $errorResponse]);
+            Log::critical(self::LOG_PREFIX . 'Internal server error', ['exception' => $e->getMessage(), 'response' => $errorResponse]);
             return $errorResponse;
         }
     }

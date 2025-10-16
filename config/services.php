@@ -35,6 +35,6 @@ return [
     ],
 
     'payment2earn' => [
-        'base_url' => env('CORE_2EARN_BASE_URL', 'https://2earn.cash/api'),
+        'base_url' => env('CORE_2EARN_BASE_URL', 'http://2earn.test'),
     ],
 ];
